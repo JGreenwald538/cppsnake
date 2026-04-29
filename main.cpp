@@ -2,6 +2,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <cstdio>
+#include <vector>
 using namespace std;
 
 char getch()
@@ -45,9 +46,9 @@ void clearScreen()
     cout << "\033[2J\033[1;1H"; // ANSI escape codes to clear the screen and move the cursor to the top-left corner
 }
 
-void loadScreen(int spaces[], int currentSpace)
+void loadScreen(std::vector<int> spaces, int currentSpace, int size)
 {
-    if (currentSpace < 9)
+    if (currentSpace < size)
     {
         string output;
         for (int i = 0; i < currentSpace; ++i)
@@ -58,49 +59,46 @@ void loadScreen(int spaces[], int currentSpace)
         cout << output;
     }
     cout << "\n";
-    for (int x = 0; x < 9; ++x)
+    for (int x = 0; x < size; ++x)
     {
-
-        cout << " ";
-    
-        for (int y = 0; y < 9; ++y)
+        for (int y = 0; y < size; ++y)
         {
-            if ((x * 9) + y == currentSpace)
+            if ((x * size) + y == currentSpace)
             {
-                cout << "|" << spaces[(x * 9) + y] << "|";
+                cout << "|" << spaces[(x * size) + y] << "|";
             }
-            else if ((x * 9) + y - 1 == currentSpace && y != 0) 
+            else if ((x * size) + y - 1 == currentSpace && y != 0) 
             {
-                cout << spaces[(x * 9) + y];
+                cout << spaces[(x * size) + y];
             }
             
             else
             {
-                cout << " " << spaces[(x * 9) + y];
+                cout << " " << spaces[(x * size) + y];
             }
         }
 
-        if (currentSpace >= (x + 1) * 9 && currentSpace < (x + 2) * 9 && currentSpace >= 9)
+        if (currentSpace >= (x + 1) * size && currentSpace < (x + 2) * size && currentSpace >= size)
         {
             cout << "\n";
             string output;
-            for (int i = 0; i < currentSpace % 9; ++i)
+            for (int i = 0; i < currentSpace % size; ++i)
             {
                 output += "  ";
             }
             output += " _";
-            cout << "  " << output + "\n";
+            cout << "" << output + "\n";
         }
-        else if (currentSpace >= x * 9 && currentSpace < (x + 1) * 9)
+        else if (currentSpace >= x * size && currentSpace < (x + 1) * size)
         {
             cout << "\n";
             string output;
-            for (int i = 0; i < currentSpace % 9; ++i)
+            for (int i = 0; i < currentSpace % size; ++i)
             {
                 output += "  ";
             }
-            output += " -" + std::to_string(currentSpace);
-            cout << " " << output + "\n";
+            output += " -";
+            cout << "" << output + "\n";
         }
         else
         {
@@ -110,52 +108,60 @@ void loadScreen(int spaces[], int currentSpace)
     clearScreen();
 };
 
-int main()
+std::vector<int> generateSpaces(int size)
 {
-    int spaces[81];
-    for (int x = 0; x < 9; ++x)
+    std::vector<int> spaces(size * size);
+    for (int x = 0; x < size; ++x)
     {
-        for (int y = 0; y < 9; ++y)
+        for (int y = 0; y < size; ++y)
         {
-            spaces[x * 9 + y] = 0;
+            spaces[x * size + y] = 0;
         }
     }
-    spaces[0] = 0;
-    int currentSpace = 0;
+    return spaces;
+}
 
-    loadScreen(spaces, currentSpace);
+int main()
+{
+    int size = 4;
+    
+    int currentSpace = 0;
+    std::vector<int> spaces;
+    spaces = generateSpaces(size);
+
+    loadScreen(spaces, currentSpace, size);
     char key = getch();
     do
     {
         if (key == 'w' || key == 'A')
         {
-            if (currentSpace > 8)
+            if (currentSpace > size - 1)
             {
-                currentSpace = currentSpace - 9;
+                currentSpace = currentSpace - size;
             }
         }
         else if (key == 'd' || key == 'C')
         {
-            if (currentSpace % 9 != 8)
+            if (currentSpace % size != size - 1)
             {
                 currentSpace = currentSpace + 1;
             }
         }
         else if (key == 's' || key == 'B')
         {
-            if (currentSpace < 72)
+            if (currentSpace < size * (size - 1))
             {
-                currentSpace = currentSpace + 9;
+                currentSpace = currentSpace + size;
             }
         }
         else if (key == 'a' || key == 'D')
         {
-            if (currentSpace % 9 != 0)
+            if (currentSpace % size != 0)
             {
                 currentSpace = currentSpace - 1;
             }
         }
-        loadScreen(spaces, currentSpace);
+        loadScreen(spaces, currentSpace, size);
         key = getch();
     } while (key != 'q');
 }
