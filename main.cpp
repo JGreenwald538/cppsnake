@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <cstdio>
 #include <vector>
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
 char getch()
@@ -111,11 +113,17 @@ void loadScreen(std::vector<int> spaces, int currentSpace, int size)
 std::vector<int> generateSpaces(int size)
 {
     std::vector<int> spaces(size * size);
+    srand(time(0));
+    int randomNum = (rand() % (size * size - 1)) + 1; // Picks a random square that doesn't include the first square
     for (int x = 0; x < size; ++x)
     {
         for (int y = 0; y < size; ++y)
         {
-            spaces[x * size + y] = 0;
+            if(x * size + y == randomNum) {
+                spaces[x * size + y] = 1;
+            } else {
+                spaces[x * size + y] = 0;
+            }
         }
     }
     return spaces;
