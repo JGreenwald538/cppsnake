@@ -5,48 +5,12 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <thread>
+#include <chrono>
 using namespace std;
-
-char getch()
-{
-    char buf = 0;
-    struct termios old = {0};
-
-    // Get the current terminal settings
-    if (tcgetattr(STDIN_FILENO, &old) < 0)
-    {
-        perror("tcgetattr()");
-    }
-
-    // Disable canonical mode and echo
-    old.c_lflag &= ~ICANON; // Disable buffering
-    old.c_lflag &= ~ECHO;   // Disable echo
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &old) < 0)
-    {
-        perror("tcsetattr ICANON");
-    }
-
-    // Read one character from standard input
-    if (read(STDIN_FILENO, &buf, 1) < 0)
-    {
-        perror("read()");
-    }
-
-    // Restore the original terminal settings
-    old.c_lflag |= ICANON;
-    old.c_lflag |= ECHO;
-    if (tcsetattr(STDIN_FILENO, TCSADRAIN, &old) < 0)
-    {
-        perror("tcsetattr ~ICANON");
-    }
-
-    return buf;
-}
-
-void clearScreen()
-{
-    cout << "\033[2J\033[1;1H"; // ANSI escape codes to clear the screen and move the cursor to the top-left corner
-}
+#include <curses.h>
+#include <string>
+#include <numeric>
 
 void loadScreen(std::vector<int> spaces, int currentSpace, int size)
 {
@@ -58,56 +22,57 @@ void loadScreen(std::vector<int> spaces, int currentSpace, int size)
             output += "  ";
         }
         output += " _";
-        cout << output;
+        printw(output.c_str());
     }
-    cout << "\n";
+    printw("\n");
     for (int x = 0; x < size; ++x)
     {
         for (int y = 0; y < size; ++y)
         {
             if ((x * size) + y == currentSpace)
             {
-                cout << "|" << spaces[(x * size) + y] << "|";
+                printw(("|" + std::to_string(spaces[(x * size) + y]) + "|").c_str());
             }
-            else if ((x * size) + y - 1 == currentSpace && y != 0) 
+            else if ((x * size) + y - 1 == currentSpace && y != 0)
             {
-                cout << spaces[(x * size) + y];
+                printw(std::to_string(spaces[(x * size) + y]).c_str());
             }
-            
+
             else
             {
-                cout << " " << spaces[(x * size) + y];
+                printw((" " + std::to_string(spaces[(x * size) + y])).c_str());
             }
         }
 
         if (currentSpace >= (x + 1) * size && currentSpace < (x + 2) * size && currentSpace >= size)
         {
-            cout << "\n";
+            printw("\n");
             string output;
             for (int i = 0; i < currentSpace % size; ++i)
             {
                 output += "  ";
             }
             output += " _";
-            cout << "" << output + "\n";
+            printw((output + "\n").c_str());
         }
         else if (currentSpace >= x * size && currentSpace < (x + 1) * size)
         {
-            cout << "\n";
+            printw("\n");
             string output;
             for (int i = 0; i < currentSpace % size; ++i)
             {
                 output += "  ";
             }
             output += " -";
-            cout << "" << output + "\n";
+            printw((output + "\n").c_str());
         }
         else
         {
-            cout << "\n\n";
+            printw("\n\n");
         }
     }
-    clearScreen();
+    // clear();
+    refresh();
 };
 
 std::vector<int> generateSpaces(int size)
@@ -119,9 +84,12 @@ std::vector<int> generateSpaces(int size)
     {
         for (int y = 0; y < size; ++y)
         {
-            if(x * size + y == randomNum) {
+            if (x * size + y == randomNum)
+            {
                 spaces[x * size + y] = 1;
-            } else {
+            }
+            else
+            {
                 spaces[x * size + y] = 0;
             }
         }
@@ -131,45 +99,75 @@ std::vector<int> generateSpaces(int size)
 
 int main()
 {
-    int size = 4;
-    
-    int currentSpace = 0;
+    int size = 9;
+
+    int currentSpace = 10;
     std::vector<int> spaces;
     spaces = generateSpaces(size);
+    std::string str = std::accumulate(spaces.begin(), spaces.end(), std::string(""),
+                                      [](const std::string &a, int b)
+                                      { return a + std::to_string(b); });
+    initscr();
+    cbreak();
+    noecho();
+    // printw(str.c_str());
 
     loadScreen(spaces, currentSpace, size);
+
+    nodelay(stdscr, TRUE);
+
     char key = getch();
+    clear();
+    // char key = 'w';
+
+    char direction = 'r';
     do
     {
         if (key == 'w' || key == 'A')
         {
-            if (currentSpace > size - 1)
-            {
-                currentSpace = currentSpace - size;
-            }
+            direction = 'u';
         }
         else if (key == 'd' || key == 'C')
         {
-            if (currentSpace % size != size - 1)
-            {
-                currentSpace = currentSpace + 1;
-            }
+            direction = 'r';
         }
         else if (key == 's' || key == 'B')
         {
-            if (currentSpace < size * (size - 1))
-            {
-                currentSpace = currentSpace + size;
-            }
+            direction = 'd';
         }
         else if (key == 'a' || key == 'D')
         {
+            direction = 'l';
+        }
+
+        if (direction == 'l')
+        {
             if (currentSpace % size != 0)
             {
-                currentSpace = currentSpace - 1;
+                currentSpace--;
             }
         }
+        else if (direction == 'r')
+        {
+            if (currentSpace % size != size - 1)
+            {
+                currentSpace++;
+            }
+        } else if (direction == 'u') {
+            if (currentSpace > size - 1) {
+                currentSpace -= size;
+            }
+        } else if (direction == 'd') {
+            if (currentSpace < size * (size - 1)) {
+                currentSpace += size;
+            }
+        }
+        
+
         loadScreen(spaces, currentSpace, size);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
         key = getch();
+        clear();
     } while (key != 'q');
 }
