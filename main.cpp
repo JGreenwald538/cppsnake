@@ -27,8 +27,10 @@ void loadScreen(std::vector<int> spaces, std::vector<std::pair<int, int>> snake,
         for (int i = 0; i < snake.size(); i++)
         {
             bool isBlockAbove = false;
-            for (int j = 0; j < snake.size(); j++) {
-                if (std::get<0>(snake[j]) == std::get<0>(snake[i]) && std::get<1>(snake[i]) - 1 == std::get<1>(snake[j])) {
+            for (int j = 0; j < snake.size(); j++)
+            {
+                if (std::get<0>(snake[j]) == std::get<0>(snake[i]) && std::get<1>(snake[i]) - 1 == std::get<1>(snake[j]))
+                {
                     isBlockAbove = true;
                 }
             }
@@ -140,38 +142,58 @@ std::vector<std::pair<int, int>> generateSnake(int snakeSize)
     return snake;
 }
 
-std::vector<std::pair<int, int>> moveSnake(std::vector<std::pair<int, int>> snake, char direction, int size)
+std::vector<std::pair<int, int>> moveSnake(std::vector<std::pair<int, int>> snake, char direction, int size, std::vector<int> spaces)
 {
     if (direction == 'l')
     {
         if (std::get<0>(snake[snake.size() - 1]) != 0)
         {
+            std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]) - 1, std::get<1>(snake[snake.size()])));
+            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            {
+                snake.insert(snake.begin(), erasedObject);
+            }
         }
     }
     else if (direction == 'r')
     {
         if (std::get<0>(snake[snake.size() - 1]) != size - 1)
         {
+            std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]) + 1, std::get<1>(snake[snake.size()])));
+            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            {
+                snake.insert(snake.begin(), erasedObject);
+            }
         }
     }
     else if (direction == 'u')
     {
         if (std::get<1>(snake[snake.size() - 1]) != 0)
         {
+            std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]), std::get<1>(snake[snake.size()]) - 1));
+            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            {
+                snake.insert(snake.begin(), erasedObject);
+            }
         }
     }
     else if (direction == 'd')
     {
         if (std::get<1>(snake[snake.size() - 1]) != size - 1)
         {
+            std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]), std::get<1>(snake[snake.size()]) + 1));
+            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            {
+                snake.insert(snake.begin(), erasedObject);
+            }
         }
     }
 
@@ -182,10 +204,9 @@ int main()
 {
     int size = 9;
     int snakeStartingSize = 3;
-    std::vector<int> spaces;
     std::vector<std::pair<int, int>> snake = generateSnake(snakeStartingSize);
 
-    spaces = generateSpaces(size);
+    std::vector<int> spaces = generateSpaces(size);
 
     initscr();
     cbreak();
@@ -222,9 +243,9 @@ int main()
             direction = 'l';
         }
 
-        if (loopNum == 4)
+        if (loopNum == 99)
         {
-            std::vector<std::pair<int, int>> newSnake = moveSnake(snake, direction, size);
+            std::vector<std::pair<int, int>> newSnake = moveSnake(snake, direction, size, spaces);
 
             if (newSnake != snake)
             {
@@ -232,7 +253,7 @@ int main()
                 updated = true;
             }
 
-            if (spaces[currentSpace] == 1)
+            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
             {
                 spaces = generateSpaces(size);
             }
@@ -245,7 +266,7 @@ int main()
             loadScreen(spaces, snake, size, currentSpace);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         loopNum++;
 
         key = getch();
