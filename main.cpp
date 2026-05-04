@@ -12,99 +12,182 @@ using namespace std;
 #include <string>
 #include <numeric>
 
+bool isSideOfSnakeSquare(int x, int y, std::vector<std::pair<int, int>> snake)
+{
+    for (int i = 0; i < snake.size(); i++)
+    {
+        if ((std::get<1>(snake[i]) * 2 + 1) == y && ((std::get<0>(snake[i]) * 2) == x || ((std::get<0>(snake[i]) + 1) * 2) == x))
+        {
+            for (int j = 0; j < snake.size(); j++)
+            {
+                if ((std::get<0>(snake[j]) + 1) * 2 == x && std::get<1>(snake[j]) * 2 == y)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isTopOfSnakeSquare(int x, int y, std::vector<std::pair<int, int>> snake)
+{
+    for (int i = 0; i < snake.size(); i++)
+    {
+        if (std::get<0>(snake[i]) * 2 + 1 == x && std::get<1>(snake[i]) * 2 == y)
+        {
+            for (int j = 0; j < snake.size(); j++)
+            {
+                if (std::get<0>(snake[j]) * 2 + 1 == x && (std::get<1>(snake[j]) + 1) * 2 == y)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool isBottomOfSnakeSquare(int x, int y, std::vector<std::pair<int, int>> snake)
+{
+    for (int i = 0; i < snake.size(); i++)
+    {
+        if (std::get<0>(snake[i]) * 2 + 1 == x && (std::get<1>(snake[i]) + 1) * 2 == y)
+        {
+            for (int j = 0; j < snake.size(); j++)
+            {
+                if (std::get<0>(snake[j]) * 2 + 1 == x && (std::get<1>(snake[j]) - 1) * 2 == y)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void loadScreen(std::vector<int> spaces, std::vector<std::pair<int, int>> snake, int size, int currentSpace)
 {
     clear();
-    for (int x = 0; x < size; ++x)
+    for (int x = 0; x < size * 2 + 1; ++x)
     {
-        string output;
-
-        for (int i = 0; i < size; ++i)
+        for (int y = 0; y < size * 2 + 1; y++)
         {
-            output += "  ";
-        }
-
-        for (int i = 0; i < snake.size(); i++)
-        {
-            bool isBlockAbove = false;
-            for (int j = 0; j < snake.size(); j++)
+            if (x % 2 == 1 && y % 2 == 1)
             {
-                if (std::get<0>(snake[j]) == std::get<0>(snake[i]) && std::get<1>(snake[i]) - 1 == std::get<1>(snake[j]))
-                {
-                    isBlockAbove = true;
-                }
+                printw(std::to_string(spaces[((y - 1) / 2) * size + ((x - 1) / 2)]).c_str());
             }
-            if (std::get<1>(snake[i]) == x && !isBlockAbove)
+            else if (isSideOfSnakeSquare(y, x, snake))
             {
-                output[std::get<0>(snake[i]) * 2 + 1] = '_';
+                printw("|");
+            }
+            else if (isTopOfSnakeSquare(y, x, snake))
+            {
+                printw("_");
+            }
+            else if (isBottomOfSnakeSquare(y, x, snake)) {
+                printw("-");
+            }
+            
+            else
+            {
+                printw(" ");
             }
         }
-
-        printw(output.c_str());
-
         printw("\n");
+        // string output;
 
-        output = "";
-        for (int i = 0; i < size; ++i)
-        {
-            output += " " + std::to_string(spaces[(x * size) + i]);
-        }
+        // for (int i = 0; i < size; ++i)
+        // {
+        //     output += "  ";
+        // }
 
-        for (int y = 0; y < size; ++y)
-        {
-            for (int i = 0; i < snake.size(); i++)
-            {
-                if (std::get<1>(snake[i]) == x)
-                {
-                    if (std::get<0>(snake[i]) == y)
-                    {
-                        output[std::get<0>(snake[i]) * 2] = '|';
-                        output[(std::get<0>(snake[i]) + 1) * 2] = '|';
-                    }
-                }
-            }
-        }
+        // for (int i = 0; i < snake.size(); i++)
+        // {
+        //     bool isBlockAbove = false;
+        //     for (int j = 0; j < snake.size(); j++)
+        //     {
+        //         if (std::get<0>(snake[j]) == std::get<0>(snake[i]) && std::get<1>(snake[i]) - 1 == std::get<1>(snake[j]))
+        //         {
+        //             isBlockAbove = true;
+        //         }
+        //     }
+        //     if (std::get<1>(snake[i]) == x && !isBlockAbove)
+        //     {
+        //         output[std::get<0>(snake[i]) * 2 + 1] = '_';
+        //     }
+        // }
 
-        printw(output.c_str());
+        // printw(output.c_str());
 
-        printw("\n");
+        // printw("\n");
 
-        output = "";
+        // output = "";
+        // for (int i = 0; i < size; ++i)
+        // {
+        //     output += " " + std::to_string(spaces[(x * size) + i]);
+        // }
 
-        for (int i = 0; i < size; ++i)
-        {
-            output += "  ";
-        }
+        // for (int y = 0; y < size; ++y)
+        // {
+        //     for (int i = 0; i < snake.size(); i++)
+        //     {
+        //         if (std::get<1>(snake[i]) == x)
+        //         {
+        //             if (std::get<0>(snake[i]) == y)
+        //             {
+        //                 output[std::get<0>(snake[i]) * 2] = '|';
+        //                 output[(std::get<0>(snake[i]) + 1) * 2] = '|';
+        //             }
+        //         }
+        //     }
+        // }
 
-        bool putDashes = false;
+        // printw(output.c_str());
 
-        for (int i = 0; i < snake.size(); i++)
-        {
-            if (std::get<1>(snake[i]) == x)
-            {
-                output[std::get<0>(snake[i]) * 2 + 1] = '-';
-                putDashes = true;
-            }
-        }
+        // printw("\n");
 
-        bool nextLineHasSquare = false;
+        // output = "";
 
-        if (!putDashes)
-        {
-            for (int i = 0; i < snake.size(); i++)
-            {
-                if (std::get<1>(snake[i]) == x + 1)
-                {
-                    nextLineHasSquare = true;
-                    break;
-                }
-            }
-        }
+        // for (int i = 0; i < size; ++i)
+        // {
+        //     output += "  ";
+        // }
 
-        if (!nextLineHasSquare)
-        {
-            printw(output.c_str());
-        }
+        // bool putDashes = false;
+
+        // for (int i = 0; i < snake.size(); i++)
+        // {
+        //     if (std::get<1>(snake[i]) == x)
+        //     {
+        //         output[std::get<0>(snake[i]) * 2 + 1] = '-';
+        //         putDashes = true;
+        //     }
+        // }
+
+        // bool nextLineHasSquare = false;
+
+        // if (!putDashes)
+        // {
+        //     for (int i = 0; i < snake.size(); i++)
+        //     {
+        //         if (std::get<1>(snake[i]) == x + 1)
+        //         {
+        //             nextLineHasSquare = true;
+        //             break;
+        //         }
+        //     }
+        // }
+
+        // if (!nextLineHasSquare)
+        // {
+        //     printw(output.c_str());
+        // }
     }
     refresh();
 };
@@ -151,7 +234,7 @@ std::vector<std::pair<int, int>> moveSnake(std::vector<std::pair<int, int>> snak
             std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]) - 1, std::get<1>(snake[snake.size()])));
-            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            if (spaces[(size * std::get<0>(snake[snake.size() - 1])) + std::get<1>(snake[snake.size() - 1])] == 1)
             {
                 snake.insert(snake.begin(), erasedObject);
             }
@@ -164,7 +247,7 @@ std::vector<std::pair<int, int>> moveSnake(std::vector<std::pair<int, int>> snak
             std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]) + 1, std::get<1>(snake[snake.size()])));
-            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            if (spaces[(size * std::get<0>(snake[snake.size() - 1])) + std::get<1>(snake[snake.size() - 1])] == 1)
             {
                 snake.insert(snake.begin(), erasedObject);
             }
@@ -177,7 +260,7 @@ std::vector<std::pair<int, int>> moveSnake(std::vector<std::pair<int, int>> snak
             std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]), std::get<1>(snake[snake.size()]) - 1));
-            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            if (spaces[(size * std::get<0>(snake[snake.size() - 1])) + std::get<1>(snake[snake.size() - 1])] == 1)
             {
                 snake.insert(snake.begin(), erasedObject);
             }
@@ -190,7 +273,7 @@ std::vector<std::pair<int, int>> moveSnake(std::vector<std::pair<int, int>> snak
             std::pair<int, int> erasedObject = snake[0];
             snake.erase(snake.begin());
             snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]), std::get<1>(snake[snake.size()]) + 1));
-            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            if (spaces[(size * std::get<0>(snake[snake.size() - 1])) + std::get<1>(snake[snake.size() - 1])] == 1)
             {
                 snake.insert(snake.begin(), erasedObject);
             }
@@ -221,30 +304,33 @@ int main()
 
     char direction = 'r';
 
+    char lastMovement = 'r';
+
     int loopNum = 0;
 
     do
     {
         bool updated = false;
-        if ((key == 'w' || key == 'A') && (direction != 'd'))
+        if ((key == 'w' || key == 'A') && (lastMovement != 'd'))
         {
             direction = 'u';
         }
-        else if ((key == 'd' || key == 'C') && (direction != 'l'))
+        else if ((key == 'd' || key == 'C') && (lastMovement != 'l'))
         {
             direction = 'r';
         }
-        else if ((key == 's' || key == 'B') && (direction != 'u'))
+        else if ((key == 's' || key == 'B') && (lastMovement != 'u'))
         {
             direction = 'd';
         }
-        else if ((key == 'a' || key == 'D') && (direction != 'r'))
+        else if ((key == 'a' || key == 'D') && (lastMovement != 'r'))
         {
             direction = 'l';
         }
 
-        if (loopNum == 99)
+        if (loopNum == 45)
         {
+            lastMovement = direction;
             std::vector<std::pair<int, int>> newSnake = moveSnake(snake, direction, size, spaces);
 
             if (newSnake != snake)
@@ -252,8 +338,12 @@ int main()
                 snake = newSnake;
                 updated = true;
             }
+            else
+            {
+                break;
+            }
 
-            if (spaces[(size * std::get<1>(snake[snake.size() - 1])) + std::get<0>(snake[snake.size() - 1])] == 1)
+            if (spaces[(size * std::get<0>(snake[snake.size() - 1])) + std::get<1>(snake[snake.size() - 1])] == 1)
             {
                 spaces = generateSpaces(size);
             }
