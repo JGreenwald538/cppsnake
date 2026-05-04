@@ -12,72 +12,106 @@ using namespace std;
 #include <string>
 #include <numeric>
 
-void loadScreen(std::vector<int> spaces, int currentSpace, int size)
+void loadScreen(std::vector<int> spaces, std::vector<std::pair<int, int>> snake, int size, int currentSpace)
 {
-    if (currentSpace < size)
+    clear();
+    for (int x = 0; x < size; ++x)
     {
         string output;
-        for (int i = 0; i < currentSpace; ++i)
+
+        for (int i = 0; i < size; ++i)
         {
             output += "  ";
         }
-        output += " _";
+
+        for (int i = 0; i < snake.size(); i++)
+        {
+            bool isBlockAbove = false;
+            for (int j = 0; j < snake.size(); j++) {
+                if (std::get<0>(snake[j]) == std::get<0>(snake[i]) && std::get<1>(snake[i]) - 1 == std::get<1>(snake[j])) {
+                    isBlockAbove = true;
+                }
+            }
+            if (std::get<1>(snake[i]) == x && !isBlockAbove)
+            {
+                output[std::get<0>(snake[i]) * 2 + 1] = '_';
+            }
+        }
+
         printw(output.c_str());
-    }
-    printw("\n");
-    for (int x = 0; x < size; ++x)
-    {
+
+        printw("\n");
+
+        output = "";
+        for (int i = 0; i < size; ++i)
+        {
+            output += " " + std::to_string(spaces[(x * size) + i]);
+        }
+
         for (int y = 0; y < size; ++y)
         {
-            if ((x * size) + y == currentSpace)
+            for (int i = 0; i < snake.size(); i++)
             {
-                printw(("|" + std::to_string(spaces[(x * size) + y]) + "|").c_str());
-            }
-            else if ((x * size) + y - 1 == currentSpace && y != 0)
-            {
-                printw(std::to_string(spaces[(x * size) + y]).c_str());
-            }
-
-            else
-            {
-                printw((" " + std::to_string(spaces[(x * size) + y])).c_str());
+                if (std::get<1>(snake[i]) == x)
+                {
+                    if (std::get<0>(snake[i]) == y)
+                    {
+                        output[std::get<0>(snake[i]) * 2] = '|';
+                        output[(std::get<0>(snake[i]) + 1) * 2] = '|';
+                    }
+                }
             }
         }
 
-        if (currentSpace >= (x + 1) * size && currentSpace < (x + 2) * size && currentSpace >= size)
+        printw(output.c_str());
+
+        printw("\n");
+
+        output = "";
+
+        for (int i = 0; i < size; ++i)
         {
-            printw("\n");
-            string output;
-            for (int i = 0; i < currentSpace % size; ++i)
-            {
-                output += "  ";
-            }
-            output += " _";
-            printw((output + "\n").c_str());
+            output += "  ";
         }
-        else if (currentSpace >= x * size && currentSpace < (x + 1) * size)
+
+        bool putDashes = false;
+
+        for (int i = 0; i < snake.size(); i++)
         {
-            printw("\n");
-            string output;
-            for (int i = 0; i < currentSpace % size; ++i)
+            if (std::get<1>(snake[i]) == x)
             {
-                output += "  ";
+                output[std::get<0>(snake[i]) * 2 + 1] = '-';
+                putDashes = true;
             }
-            output += " -";
-            printw((output + "\n").c_str());
         }
-        else
+
+        bool nextLineHasSquare = false;
+
+        if (!putDashes)
         {
-            printw("\n\n");
+            for (int i = 0; i < snake.size(); i++)
+            {
+                if (std::get<1>(snake[i]) == x + 1)
+                {
+                    nextLineHasSquare = true;
+                    break;
+                }
+            }
+        }
+
+        if (!nextLineHasSquare)
+        {
+            printw(output.c_str());
         }
     }
-    // clear();
     refresh();
 };
 
-std::vector<int> generateSpaces(int size, int randomNum)
+std::vector<int> generateSpaces(int size)
 {
     std::vector<int> spaces(size * size);
+    srand(time(0));
+    int randomNum = (rand() % (size * size - 1)) + 1; // Picks a random square that doesn't include the first square
     for (int x = 0; x < size; ++x)
     {
         for (int y = 0; y < size; ++y)
@@ -95,88 +129,126 @@ std::vector<int> generateSpaces(int size, int randomNum)
     return spaces;
 }
 
+std::vector<std::pair<int, int>> generateSnake(int snakeSize)
+{
+    std::vector<std::pair<int, int>> snake(snakeSize);
+
+    for (int i = snakeSize - 1; i >= 0; i--)
+    {
+        snake[i] = std::make_pair(i, 0);
+    }
+    return snake;
+}
+
+std::vector<std::pair<int, int>> moveSnake(std::vector<std::pair<int, int>> snake, char direction, int size)
+{
+    if (direction == 'l')
+    {
+        if (std::get<0>(snake[snake.size() - 1]) != 0)
+        {
+            snake.erase(snake.begin());
+            snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]) - 1, std::get<1>(snake[snake.size()])));
+        }
+    }
+    else if (direction == 'r')
+    {
+        if (std::get<0>(snake[snake.size() - 1]) != size - 1)
+        {
+            snake.erase(snake.begin());
+            snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]) + 1, std::get<1>(snake[snake.size()])));
+        }
+    }
+    else if (direction == 'u')
+    {
+        if (std::get<1>(snake[snake.size() - 1]) != 0)
+        {
+            snake.erase(snake.begin());
+            snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]), std::get<1>(snake[snake.size()]) - 1));
+        }
+    }
+    else if (direction == 'd')
+    {
+        if (std::get<1>(snake[snake.size() - 1]) != size - 1)
+        {
+            snake.erase(snake.begin());
+            snake.emplace_back(std::make_pair(std::get<0>(snake[snake.size() - 1]), std::get<1>(snake[snake.size()]) + 1));
+        }
+    }
+
+    return snake;
+}
+
 int main()
 {
     int size = 9;
-    int currentSpace = 0;
+    int snakeStartingSize = 3;
     std::vector<int> spaces;
+    std::vector<std::pair<int, int>> snake = generateSnake(snakeStartingSize);
 
-    srand(time(0));
-    int randomNum = (rand() % (size * size - 1)) + 1; // Picks a random square that doesn't include the first square
-
-    spaces = generateSpaces(size, randomNum);
+    spaces = generateSpaces(size);
 
     initscr();
     cbreak();
     noecho();
 
-    loadScreen(spaces, currentSpace, size);
+    int currentSpace = 0;
+    loadScreen(spaces, snake, size, currentSpace);
 
     nodelay(stdscr, TRUE);
 
     char key = getch();
-    clear();
 
     char direction = 'r';
 
     int loopNum = 0;
-    int snakeSize = 1;
+
     do
     {
-        if (key == 'w' || key == 'A')
+        bool updated = false;
+        if ((key == 'w' || key == 'A') && (direction != 'd'))
         {
             direction = 'u';
         }
-        else if (key == 'd' || key == 'C')
+        else if ((key == 'd' || key == 'C') && (direction != 'l'))
         {
             direction = 'r';
         }
-        else if (key == 's' || key == 'B')
+        else if ((key == 's' || key == 'B') && (direction != 'u'))
         {
             direction = 'd';
         }
-        else if (key == 'a' || key == 'D')
+        else if ((key == 'a' || key == 'D') && (direction != 'r'))
         {
             direction = 'l';
         }
 
-        if (loopNum == 4) {
-            if (direction == 'l')
+        if (loopNum == 4)
+        {
+            std::vector<std::pair<int, int>> newSnake = moveSnake(snake, direction, size);
+
+            if (newSnake != snake)
             {
-                if (currentSpace % size != 0)
-                {
-                    currentSpace--;
-                }
+                snake = newSnake;
+                updated = true;
             }
-            else if (direction == 'r')
+
+            if (spaces[currentSpace] == 1)
             {
-                if (currentSpace % size != size - 1)
-                {
-                    currentSpace++;
-                }
+                spaces = generateSpaces(size);
             }
-            else if (direction == 'u')
-            {
-                if (currentSpace > size - 1)
-                {
-                    currentSpace -= size;
-                }
-            }
-            else if (direction == 'd')
-            {
-                if (currentSpace < size * (size - 1))
-                {
-                    currentSpace += size;
-                }
-            }
+
             loopNum = 0;
         }
-        
-        loadScreen(spaces, currentSpace, size);
+
+        if (updated)
+        {
+            loadScreen(spaces, snake, size, currentSpace);
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         loopNum++;
 
         key = getch();
-        clear();
+
     } while (key != 'q');
 }
